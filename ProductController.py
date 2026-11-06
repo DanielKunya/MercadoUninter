@@ -1,8 +1,7 @@
 from random import randrange
-
 from Product import Product
-
-stock = []
+import json
+from fileManagment import readData, writeData
 
 def searchProduct(search=False):
     #Caso a busca seja com id
@@ -27,19 +26,46 @@ def searchProduct(search=False):
     return False
 
 def addProduct(name, price):
-    id = len(stock)
-    if id == 0:
-        id = 0
-    else:
-        id = stock[-1].id + 1
+    global stock
+    stock = readData()
+    duplicate = False
 
-    product = Product(id, name, price)
-    stock.append(product)
+    #Checagem por duplicatas
+    for product in stock:
+        if product.name.lower() == name.lower():
+            duplicate = True
+
+    if duplicate == False:
+        id = len(stock)
+        print(stock)
+        if id == 0:
+            id = 0
+        else:
+            id = stock[-1].id + 1
+
+        product = Product(id, name, price)
+        stock.append(product)
+
+        writeData(stock)
+        stock = readData()
+        return True
+    else:
+        return False
+
 
 def removeProduct(id):
-    stock.remove(searchProduct(id))
+    global stock
+    stock = readData()
+
+    stock.data.remove(searchProduct(id))
+
+    writeData(stock)
+    stock = readData()
 
 def manageStock(search, amount):
+    global stock
+    stock = readData()
+
     product = searchProduct(search)
     productAmount = product.getAmount()
 
@@ -50,15 +76,5 @@ def manageStock(search, amount):
         else:
             product.setAmount(productAmount + amount)
 
-addProduct("Parafuso", 3.00)
-addProduct("Porca", 2.00)
-addProduct("Prego", 1.00)
-removeProduct(1)
-addProduct("Roldana", 5.00)
-print(searchProduct(3).name)
-print(searchProduct("Roldana").price)
-
-for product in stock:
-    manageStock(product.id, randrange(0,10))
-    manageStock(product.id, (randrange(0,5) * -1))
-    print([product.id, product.name, product.price, product.getAmount()])
+    writeData(stock)
+    stock = readData()

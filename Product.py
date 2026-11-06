@@ -10,3 +10,11 @@ class Product:
 
     def setAmount(self, amount):
         self.__amount = amount
+
+    def toDict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "price": self.price,
+            "amount": self.__amount
+        }
