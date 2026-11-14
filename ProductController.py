@@ -73,8 +73,26 @@ def manageStock(search, amount):
         if productAmount + amount < 0:
             product.setAmount(0)
             print(f"O valor extrapola em {productAmount + amount}")
+            return False
         else:
             product.setAmount(productAmount + amount)
 
+
     writeData(stock)
     stock = readData()
+    return True
+
+def editProduct(id, nname, nprice):
+    global stock
+    stock = readData()
+    product = searchProduct(id)
+
+    if product == False:
+        return False
+    else:
+        product.name = nname
+        product.price = nprice
+        writeData(stock)
+        stock = readData()
+        return True
+
