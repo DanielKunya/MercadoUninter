@@ -1,7 +1,9 @@
-from random import randrange
 from Product import Product
 import json
-from fileManagment import readData, writeData
+
+from Record import Record
+from fileManagment import readData, writeData, readHistory
+
 
 def searchProduct(search=False):
     #Caso a busca seja com id
@@ -46,7 +48,7 @@ def addProduct(name, price):
         product = Product(id, name, price)
         stock.append(product)
 
-        writeData(stock)
+        writeData(data=stock)
         stock = readData()
         return True
     else:
@@ -59,26 +61,35 @@ def removeProduct(id):
 
     stock.data.remove(searchProduct(id))
 
-    writeData(stock)
+    writeData(data=stock)
     stock = readData()
 
-def manageStock(search, amount):
+def manageStock(search, amount, date, user):
     global stock
+    global history
+    history = readHistory()
     stock = readData()
 
     product = searchProduct(search)
     productAmount = product.getAmount()
+    signal = ""
+
+    if amount > 0:
+        signal = True
+    elif amount < 0:
+        signal = False
+
 
     if product != False:
         if productAmount + amount < 0:
-            product.setAmount(0)
-            print(f"O valor extrapola em {productAmount + amount}")
             return False
         else:
             product.setAmount(productAmount + amount)
 
+    record = Record(product, user, amount, signal, date)
+    history.append(record)
 
-    writeData(stock)
+    writeData(data=stock, history=history)
     stock = readData()
     return True
 
@@ -92,7 +103,7 @@ def editProduct(id, nname, nprice):
     else:
         product.name = nname
         product.price = nprice
-        writeData(stock)
+        writeData(data=stock)
         stock = readData()
         return True
 

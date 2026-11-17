@@ -64,6 +64,7 @@ class StockMenu(tk.Frame):
         # Botão para executar criação
         tk.Button(self, text="Create", command=lambda: self.createRow(entry1.get(), entry2.get(), entry3.get())).grid(
             row=3, column=1)
+        tk.Button(self, text="History", command=lambda: historyModal(self)).grid(row=3, column=2)
 
         # Lista dos produtos na sua forma Label
         self.stockLabelList = []
@@ -93,7 +94,7 @@ class StockMenu(tk.Frame):
 
             self.stockLabelList.extend([name, price, amount])
 
-    #Função responsável por atualizar a lsita visível, deve ser cahamada em qualquer alteração
+    # Função responsável por atualizar a lsita visível, deve ser cahamada em qualquer alteração
     def createRow(self, name, price, amount):
         response = addProduct(name, price)
         if response:
@@ -101,14 +102,15 @@ class StockMenu(tk.Frame):
         else:
             messagebox.showerror("Error", "Product not added")
 
-#Janela para edição do produto
+
+# Janela para edição do produto
 class EditModal(tk.Toplevel):
     def __init__(self, master, product):
         super().__init__(master)
         self.title("Edit Product")
         self.pid = product.id
 
-        #Criação dos Labels
+        # Criação dos Labels
         tk.Label(self, text=f"Editing {product.name}").grid(row=0, column=0, columnspan=2)
         tk.Label(self, text="Name: ").grid(row=1, column=0)
         tk.Label(self, text="Price: ").grid(row=2, column=0)
@@ -124,14 +126,14 @@ class EditModal(tk.Toplevel):
         self.entry1.insert(0, product.name)
         self.entry2.insert(0, product.price)
 
-        #Botão de salvar
+        # Botão de salvar
         tk.Button(self, text="Save", command=lambda: self.saveHandle()).grid(row=3, column=0, columnspan=2)
 
-        #Certifica de que a Janela está visível, e mantém como primeiro plano
+        # Certifica de que a Janela está visível, e mantém como primeiro plano
         self.wait_visibility()
         self.grab_set()
 
-    #Função para assegurar a interação com o botão de Salvar
+    # Função para assegurar a interação com o botão de Salvar
     def saveHandle(self):
         response = editProduct(self.pid, self.entry1.get(), self.entry2.get())
 
@@ -140,6 +142,7 @@ class EditModal(tk.Toplevel):
             self.destroy()
         else:
             messagebox.showerror("Error", "Product not edited")
+
 
 # Janela de alteração da quantidade do produto
 class editAmountModal(tk.Toplevel):
@@ -151,35 +154,65 @@ class editAmountModal(tk.Toplevel):
         # Criação dos Labels informativos
         tk.Label(self, text="    ").grid(row=0, column=0, columnspan=2)
         tk.Label(self, text=f"Product {product.name}").grid(row=1, column=0, columnspan=2)
-        tk.Label(self, text=f"Amount: {product.getAmount()}").grid(row=2, column=0, columnspan=2)
+        tk.Label(self, text=f"Stock: {product.getAmount()}").grid(row=2, column=0, columnspan=2)
+        tk.Label(self, text="Date:").grid(row=3, column=0)
+        tk.Label(self, text="Amount:").grid(row=4, column=0)
 
         # Rodinha de valor
         self.entry1 = tk.Spinbox(self, increment=1, from_=0, to=1000)
-        self.entry1.grid(row=3, column=0, columnspan=2)
+        self.entry1.grid(row=4, column=1)
+        self.entry2 = tk.Entry(self)
+        self.entry2.grid(row=3, column=1)
 
         # Botões de adicionar e remover
-        tk.Button(self, text="Remove", command=lambda: self.saveHandle(self.entry1.get(), False)).grid(row=4, column=0)
-        tk.Button(self, text="Add", command=lambda: self.saveHandle(self.entry1.get(), True)).grid(row=4, column=1)
+        tk.Button(self, text="Remove", command=lambda: self.saveHandle(self.entry1.get(), False)).grid(row=5, column=0)
+        tk.Button(self, text="Add", command=lambda: self.saveHandle(self.entry1.get(), True)).grid(row=5, column=1)
 
-        #Certifica que a tela carregou e põe prioridade
+        # Certifica que a tela carregou e põe prioridade
         self.wait_visibility()
         self.grab_set()
 
-    #Interação com o botão de adicionar e remvoer
+    # Interação com o botão de adicionar e remvoer
     def saveHandle(self, value, signal):
         value = int(value)
-        
+
         if signal == False:
             value = value * -1
 
-        response = manageStock(self.pid, value)
+        response = manageStock(self.pid, value, self.entry2.get(), "Daniel")
 
         if response:
             self.master.updateList()
             self.destroy()
         else:
-            messagebox.showerror("Error", "Product not edited")
+            messagebox.showerror("Error", "Product not edited, tried to remove more than the actual stock", parent=self)
 
+class historyModal(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("History")
+        self.history = readHistory()
+
+        tk.Label(self, text="Product").grid(row=0, column=0)
+        tk.Label(self, text="Amount").grid(row=0, column=1)
+        tk.Label(self, text="Add/Remove").grid(row=0, column=2)
+        tk.Label(self, text="Date").grid(row=0, column=3)
+        tk.Label(self, text="User").grid(row=0, column=4)
+
+        for i, record in enumerate(self.history, start=1):
+            addremove = "Add"
+            if record.signal == False:
+                addremove="Remove"
+
+            print(f"Product: {record.product.name} - Amount: {record.amount} - Add/Remove: {addremove} - Date: {record.date} - User: {record.user}")
+            tk.Label(self, text=record.product.name).grid(row=i, column=0)
+            tk.Label(self, text=record.amount).grid(row=i, column=1)
+            tk.Label(self, text=addremove).grid(row=i, column=2)
+            tk.Label(self, text=record.date).grid(row=i, column=3)
+            tk.Label(self, text=record.user).grid(row=i, column=4)
+
+        self.wait_visibility()
+        self.grab_set()
 
 app = App()
 app.mainloop()
